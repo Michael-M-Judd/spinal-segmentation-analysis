@@ -1,6 +1,6 @@
 # Welcome to the Spinal Segmentation Wiki!
 
-This is a work in progress project where over the course of the next few weeks we'll be updating on how to use
+This is a work in progress project where over the course of the next few weeks we'll be updating the wiki for information on how to use the module, and how we solved the spinal segmentation problem.
 
 ## Our approach to the problem
 
