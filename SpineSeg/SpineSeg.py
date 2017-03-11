@@ -18,14 +18,11 @@ class SpineSeg(ScriptedLoadableModule):
     self.parent.title = "SpineSeg" # TODO make this more human readable by adding spaces
     self.parent.categories = ["Examples"]
     self.parent.dependencies = []
-    self.parent.contributors = ["John Doe (AnyWare Corp.)"] # replace with "Firstname Lastname (Organization)"
+    self.parent.contributors = ["Michael Judd, Michael Reid -- Queen's University"] # replace with "Firstname Lastname (Organization)"
     self.parent.helpText = """
-    This is an example of scripted loadable module bundled in an extension.
-    It performs a simple thresholding on the input volume and optionally captures a screenshot.
+
     """
     self.parent.acknowledgementText = """
-    This file was originally developed by Jean-Christophe Fillion-Robin, Kitware Inc.
-    and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR013218-12S1.
 """ # replace with organization, grant and thanks.
 
 #
@@ -41,7 +38,23 @@ class SpineSegWidget(ScriptedLoadableModuleWidget):
     ScriptedLoadableModuleWidget.setup(self)
 
     # Instantiate and connect widgets ...
+    #
+    # Filters Area
+    #
+    filtersCollapsibleButton = ctk.ctkCollapsibleButton()
+    filtersCollapsibleButton.text = "Filters"
+    self.layout.addWidget(filtersCollapsibleButton)
+    # Layout within the dummy collapsible button
+    filtersFormLayout = qt.QFormLayout(filtersCollapsibleButton)
 
+    # filter selector
+    self.filterSelector = qt.QComboBox()
+    filtersFormLayout.addRow("Filter:", self.filterSelector)
+
+    # As we make our filters we can add them in a more efficient way
+    self.filterSelector.addItem("Filter1", 0)
+    self.filterSelector.addItem("Filter2", 1)
+    self.filterSelector.addItem("Filter2", 2)
     #
     # Parameters Area
     #
@@ -82,19 +95,9 @@ class SpineSegWidget(ScriptedLoadableModuleWidget):
     self.outputSelector.setToolTip( "Pick the output to the algorithm." )
     parametersFormLayout.addRow("Output Volume: ", self.outputSelector)
 
-    #
-    # threshold value
-    #
-    self.imageThresholdSliderWidget = ctk.ctkSliderWidget()
-    self.imageThresholdSliderWidget.singleStep = 0.1
-    self.imageThresholdSliderWidget.minimum = -100
-    self.imageThresholdSliderWidget.maximum = 100
-    self.imageThresholdSliderWidget.value = 0.5
-    self.imageThresholdSliderWidget.setToolTip("Set threshold value for computing the output image. Voxels that have intensities lower than this value will set to zero.")
-    parametersFormLayout.addRow("Image threshold", self.imageThresholdSliderWidget)
 
     #
-    # check box to trigger taking screen shots for later use in tutorials
+    # check box to trigger taking screen shots for later classification
     #
     self.enableScreenshotsFlagCheckBox = qt.QCheckBox()
     self.enableScreenshotsFlagCheckBox.checked = 0
@@ -129,7 +132,6 @@ class SpineSegWidget(ScriptedLoadableModuleWidget):
   def onApplyButton(self):
     logic = SpineSegLogic()
     enableScreenshotsFlag = self.enableScreenshotsFlagCheckBox.checked
-    imageThreshold = self.imageThresholdSliderWidget.value
     logic.run(self.inputSelector.currentNode(), self.outputSelector.currentNode(), imageThreshold, enableScreenshotsFlag)
 
 #
