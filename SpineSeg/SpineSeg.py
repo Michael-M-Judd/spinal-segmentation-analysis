@@ -1,6 +1,8 @@
 import os
 import unittest
 import vtk, qt, ctk, slicer
+import SimpleITK as sitk
+import sitkUtils
 from slicer.ScriptedLoadableModule import *
 import logging
 
@@ -15,7 +17,7 @@ class SpineSeg(ScriptedLoadableModule):
 
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
-    self.parent.title = "SpineSeg" # TODO make this more human readable by adding spaces
+    self.parent.title = "Spine Segmentation" # TODO make this more human readable by adding spaces
     self.parent.categories = ["Examples"]
     self.parent.dependencies = []
     self.parent.contributors = ["Michael Judd, Michael Reid -- Queen's University"] # replace with "Firstname Lastname (Organization)"
@@ -52,9 +54,12 @@ class SpineSegWidget(ScriptedLoadableModuleWidget):
     filtersFormLayout.addRow("Filter:", self.filterSelector)
 
     # As we make our filters we can add them in a more efficient way
-    self.filterSelector.addItem("Filter1", 0)
+    
+    self.filterSelector.addItem("Gaussian Filter", 0)
     self.filterSelector.addItem("Filter2", 1)
-    self.filterSelector.addItem("Filter2", 2)
+    self.filterSelector.addItem("Filter3", 2)
+
+
     #
     # Parameters Area
     #
@@ -116,7 +121,7 @@ class SpineSegWidget(ScriptedLoadableModuleWidget):
     self.applyButton.connect('clicked(bool)', self.onApplyButton)
     self.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
     self.outputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
-
+    
     # Add vertical spacer
     self.layout.addStretch(1)
 
@@ -132,7 +137,9 @@ class SpineSegWidget(ScriptedLoadableModuleWidget):
   def onApplyButton(self):
     logic = SpineSegLogic()
     enableScreenshotsFlag = self.enableScreenshotsFlagCheckBox.checked
-    logic.run(self.inputSelector.currentNode(), self.outputSelector.currentNode(), imageThreshold, enableScreenshotsFlag)
+    imageThreshold = 1
+    filterType = self.filterSelector.currentNode()
+    logic.run(self.inputSelector.currentNode(), self.outputSelector.currentNode(), imageThreshold, enableScreenshotsFlag, filterType)
 
 #
 # SpineSegLogic
@@ -212,7 +219,7 @@ class SpineSegLogic(ScriptedLoadableModuleLogic):
     annotationLogic = slicer.modules.annotations.logic()
     annotationLogic.CreateSnapShot(name, description, type, 1, imageData)
 
-  def run(self, inputVolume, outputVolume, imageThreshold, enableScreenshots=0):
+  def run(self, inputVolume, outputVolume, imageThreshold, enableScreenshots, filterType):
     """
     Run the actual algorithm
     """
@@ -233,6 +240,18 @@ class SpineSegLogic(ScriptedLoadableModuleLogic):
 
     logging.info('Processing completed')
 
+    # load Volume into slicer, for now this is on my computer but we can change once we get proper documentation
+    slicer.util.loadVolume('C:/Users/Mikeh/Downloads/SpineData/007.CTDC.nrrd')
+    f = 'C:/Users/Mikeh/Downloads/SpineData/007.CTDC.nrrd'    
+    inputImage = sitkUtils.PullFromSlicer('007')
+    #
+    # TODO: rest of ifs for our filter possibilites
+    #
+    if filterType == "Gaussian":
+      imageFilter = sitk.DiscreteGaussianImageFilter()
+      outputImage = imageFilter.Execute(inputImage)
+      sitkUtils.PushToSlicer(outputImage,'outputImage')
+        
     return True
 
 
