@@ -17,15 +17,14 @@ class SpineSeg(ScriptedLoadableModule):
 
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
-    self.parent.title = "Spine Segmentation" # TODO make this more human readable by adding spaces
+    self.parent.title = "Spine Segmentation"
     self.parent.categories = ["Examples"]
     self.parent.dependencies = []
     self.parent.contributors = ["Michael Judd, Michael Reid -- Queen's University"] # replace with "Firstname Lastname (Organization)"
     self.parent.helpText = """
 
     """
-    self.parent.acknowledgementText = """
-""" # replace with organization, grant and thanks.
+    self.parent.acknowledgementText = """""" # replace with organization, grant and thanks.
 
 #
 # SpineSegWidget
@@ -40,6 +39,7 @@ class SpineSegWidget(ScriptedLoadableModuleWidget):
     ScriptedLoadableModuleWidget.setup(self)
 
     # Instantiate and connect widgets ...
+    
     #
     # Filters Area
     #
@@ -56,7 +56,7 @@ class SpineSegWidget(ScriptedLoadableModuleWidget):
     # As we make our filters we can add them in a more efficient way
     
     self.filterSelector.addItem("Gaussian Filter", 0)
-    self.filterSelector.addItem("Filter2", 1)
+    self.filterSelector.addItem("Edge Detection", 1)
     self.filterSelector.addItem("Filter3", 2)
 
 
@@ -112,8 +112,8 @@ class SpineSegWidget(ScriptedLoadableModuleWidget):
     #
     # Apply Button
     #
-    self.applyButton = qt.QPushButton("Apply")
-    self.applyButton.toolTip = "Run the algorithm."
+    self.applyButton = qt.QPushButton("Segment")
+    self.applyButton.toolTip = "Run the Segmentation algorithm."
     self.applyButton.enabled = False
     parametersFormLayout.addRow(self.applyButton)
 
@@ -138,7 +138,7 @@ class SpineSegWidget(ScriptedLoadableModuleWidget):
     logic = SpineSegLogic()
     enableScreenshotsFlag = self.enableScreenshotsFlagCheckBox.checked
     imageThreshold = 1
-    filterType = self.filterSelector.currentNode()
+    filterType = self.filterSelector.currentText
     logic.run(self.inputSelector.currentNode(), self.outputSelector.currentNode(), imageThreshold, enableScreenshotsFlag, filterType)
 
 #
@@ -246,12 +246,16 @@ class SpineSegLogic(ScriptedLoadableModuleLogic):
     inputImage = sitkUtils.PullFromSlicer('007')
     #
     # TODO: rest of ifs for our filter possibilites
-    #
-    if filterType == "Gaussian":
+    if filterType == "Gaussian Filter":
       imageFilter = sitk.DiscreteGaussianImageFilter()
       outputImage = imageFilter.Execute(inputImage)
       sitkUtils.PushToSlicer(outputImage,'outputImage')
-        
+    return True
+
+    if filterType == "Edge Detection":
+      imageFilter = sitk.CannyEdgeDetectionImageFilter()
+      outputImage = imageFilter.Execute(inputImage)
+      sitkUtils.PushToSlicer(outputImage,'outputImage')
     return True
 
 
