@@ -57,7 +57,7 @@ class SpineSegWidget(ScriptedLoadableModuleWidget):
     
     self.filterSelector.addItem("Gaussian Filter", 0)
     self.filterSelector.addItem("Edge Detection", 1)
-    self.filterSelector.addItem("Filter3", 2)
+    self.filterSelector.addItem("Threshold Image", 2)
 
 
     #
@@ -250,13 +250,17 @@ class SpineSegLogic(ScriptedLoadableModuleLogic):
       imageFilter = sitk.DiscreteGaussianImageFilter()
       outputImage = imageFilter.Execute(inputImage)
       sitkUtils.PushToSlicer(outputImage,'outputImage')
-    return True
-
-    if filterType == "Edge Detection":
+      return True
+    elif filterType == "Edge Detection":
       imageFilter = sitk.CannyEdgeDetectionImageFilter()
       outputImage = imageFilter.Execute(inputImage)
       sitkUtils.PushToSlicer(outputImage,'outputImage')
-    return True
+      return True
+    elif filterType == "Threshold Image":
+      imageFilter = sitk.ThresholdImageFilter()
+      outputImage = imageFilter.Execute(inputImage, 180, 800, 1)
+      sitkUtils.PushToSlicer(outputImage,'outputImage')
+      return True  
 
 
 class SpineSegTest(ScriptedLoadableModuleTest):
