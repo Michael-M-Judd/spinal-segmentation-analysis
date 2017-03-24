@@ -26,7 +26,7 @@ Were we to continue our project in the future, some of our goals for the final i
 
 We would begin by developing a more perfect way of thresholding and modeling the individual vertebrae of the spine. In particular, using a statistical shape model for spines would help us reduce processing time and improve results for 3D representation in Slicer or other visualization programs [1]. The most likely issues would be the variability of spinal shape and on a greater level individual vertebral shape in the population. Using pre-existing data for the physiological variability of vertebral body volumes would help us to minimize this issue, however [2]. By using Statistical shape modeling (SSM) we will be able to represent the shape variability of individual vertebrae as well as perform partially automatic segmentation and 3D model generation of the spine, possibly aiding surgical planning. 
 
-![alt tag](http://imgur.com/a/myVeh)
+![alt tag](http://i.imgur.com/sHaNF3m.png)
 
 Fig 1. Flow diagram for generating a surface shape model from input CT scans.
 
@@ -34,7 +34,7 @@ By using known vertebral body volume we can ensure we maintain consistent and ac
 
 Another form of segmentation could be found using the GrowCut method [4]. By using a random number of points and converging on a natural segmentation we may be able to make image segmentation even faster than by using Statistical Shape Modeling.
 
-![alt tag](http://imgur.com/a/XbjOz)
+![alt tag](http://i.imgur.com/PKezAnz.png)
 
 Fig 2. Proof of concept showing fiducial land marks scattered across vertebral model and segmentation of individual vertebra.
 
