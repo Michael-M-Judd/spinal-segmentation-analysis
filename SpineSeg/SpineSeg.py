@@ -5,7 +5,7 @@ import SimpleITK as sitk
 import sitkUtils
 from slicer.ScriptedLoadableModule import *
 import logging
-
+import time
 #
 # SpineSeg
 #
@@ -224,44 +224,72 @@ class SpineSegLogic(ScriptedLoadableModuleLogic):
     Run the actual algorithm
     """
 
-    if not self.isValidInputOutputData(inputVolume, outputVolume):
-      slicer.util.errorDisplay('Input volume is the same as output volume. Choose a different output volume.')
-      return False
+    start = time.time()
+    #if not self.isValidInputOutputData(inputVolume, outputVolume):
+     # slicer.util.errorDisplay('Input volume is the same as output volume. Choose a different output volume.')
+      #return False
 
     logging.info('Processing started')
 
     # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
-    cliParams = {'InputVolume': inputVolume.GetID(), 'OutputVolume': outputVolume.GetID(), 'ThresholdValue' : imageThreshold, 'ThresholdType' : 'Above'}
-    cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
+    # cliParams = {'InputVolume': inputVolume.GetID(), 'OutputVolume': outputVolume.GetID(), 'ThresholdValue' : imageThreshold, 'ThresholdType' : 'Above'}
+    # cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
 
     # Capture screenshot
     if enableScreenshots:
       self.takeScreenshot('SpineSegTest-Start','MyScreenshot',-1)
+  
 
-    logging.info('Processing completed')
-
-    # load Volume into slicer, for now this is on my computer but we can change once we get proper documentation
-    slicer.util.loadVolume('C:/Users/Mikeh/Downloads/SpineData/007.CTDC.nrrd')
-    f = 'C:/Users/Mikeh/Downloads/SpineData/007.CTDC.nrrd'    
-    inputImage = sitkUtils.PullFromSlicer('007')
+    inputImage = sitkUtils.PullFromSlicer(inputVolume.GetName())
     #
     # TODO: rest of ifs for our filter possibilites
     if filterType == "Gaussian Filter":
-      imageFilter = sitk.DiscreteGaussianImageFilter()
+      imageFilter = sitk.MeanImageFilter()
       outputImage = imageFilter.Execute(inputImage)
-      sitkUtils.PushToSlicer(outputImage,'outputImage')
+      imageFilter = sitk.ThresholdImageFilter()
+      outputImage = imageFilter.Execute(outputImage, 200, 1400, 1)      
+      imageFilter = sitk.ThresholdMaximumConnectedComponentsImageFilter()
+      outputImage = imageFilter.Execute(outputImage) 
+      sitkUtils.PushToSlicer(outputImage,outputVolume.GetName())
       return True
     elif filterType == "Edge Detection":
-      imageFilter = sitk.CannyEdgeDetectionImageFilter()
+      imageFilter = sitk.MeanImageFilter()
       outputImage = imageFilter.Execute(inputImage)
-      sitkUtils.PushToSlicer(outputImage,'outputImage')
-      return True
-    elif filterType == "Threshold Image":
       imageFilter = sitk.ThresholdImageFilter()
-      outputImage = imageFilter.Execute(inputImage, 180, 800, 1)
-      sitkUtils.PushToSlicer(outputImage,'outputImage')
-      return True  
+      outputImage = imageFilter.Execute(inputImage, 300, 1400, 1)
+      imageFilter = sitk.ScalarConnectedComponentImageFilter()
+      outputImage = imageFilter.Execute(outputImage)
+      sitkUtils.PushToSlicer(outputImage,outputVolume.GetName())
+      return True 
+    elif filterType == "Threshold Image":
 
+      imageFilter = sitk.MeanImageFilter()
+      outputImage = imageFilter.Execute(inputImage)
+      imageFilter = sitk.BinaryOpeningByReconstructionImageFilter()
+      outputImage = imageFilter.Execute(outputImage)
+      imageFilter = sitk.ThresholdImageFilter()
+      outputImage = imageFilter.Execute(inputImage, 200, 1400, 1)
+      #imageFilter = sitk.MaximumEntropyThresholdImageFilter()
+      #outputImage = imageFilter.Execute(inputImage)      
+      sitkUtils.PushToSlicer(outputImage,outputVolume.GetName(),overwrite=True)
+
+      end = time.time()
+      print(end - start)
+      
+    outputImData = outputVolume.GetImageData()
+    
+
+      
+'''
+    Code for rendering volume. Waiting on Tamas for surface modelling
+    logic = slicer.modules.volumerendering.logic()
+    displayNode = logic.CreateVolumeRenderingDisplayNode()
+    slicer.mrmlScene.AddNode(displayNode)
+    displayNode.UnRegister(logic)
+    logic.UpdateDisplayNodeFromVolumeNode(displayNode, outputVolume)
+    outputVolume.AddAndObserveDisplayNodeID(displayNode.GetID())
+    logging.info('Processing completed')
+'''
 
 class SpineSegTest(ScriptedLoadableModuleTest):
   """
@@ -293,26 +321,3 @@ class SpineSegTest(ScriptedLoadableModuleTest):
     your test should break so they know that the feature is needed.
     """
 
-    self.delayDisplay("Starting the test")
-    #
-    # first, get some data
-    #
-    import urllib
-    downloads = (
-        ('http://slicer.kitware.com/midas3/download?items=5767', 'FA.nrrd', slicer.util.loadVolume),
-        )
-
-    for url,name,loader in downloads:
-      filePath = slicer.app.temporaryPath + '/' + name
-      if not os.path.exists(filePath) or os.stat(filePath).st_size == 0:
-        logging.info('Requesting download %s from %s...\n' % (name, url))
-        urllib.urlretrieve(url, filePath)
-      if loader:
-        logging.info('Loading %s...' % (name,))
-        loader(filePath)
-    self.delayDisplay('Finished with download and loading')
-
-    volumeNode = slicer.util.getNode(pattern="FA")
-    logic = SpineSegLogic()
-    self.assertIsNotNone( logic.hasImageData(volumeNode) )
-    self.delayDisplay('Test passed!')
